@@ -19,6 +19,23 @@ module challenge::day_02 {
     // #[test]
     // fun test_sum() {
     //     // Your code here
-    // }
+  module 0x1::MyFirstModule {
+    public fun sum(a: u64, b: u64): u64 {
+        a + b
+    }
+
+    public fun is_equal(a: u64, b: u64): bool {
+        a == b
+    }
+
+    #[test]
+    fun test_sum() {
+        let result = sum(1, 2);
+        
+        // assert! makrosu, parantez içindeki ifadenin doğru (true) olmasını bekler.
+        // Eğer doğru değilse, yanındaki hata koduyla (0) işlemi durdurur.
+        assert!(result == 3, 0);
+    }
 }
 
+    // }
