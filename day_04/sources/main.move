@@ -39,6 +39,19 @@ module challenge::day_04 {
     // Use vector::push_back to add the habit
     // public fun add_habit(list: &mut HabitList, habit: Habit) {
     //     // Your code here
+    // Habit yapısının önceden tanımlı olduğunu varsayıyoruz.
+// HabitList, içinde Habit nesnelerini barındıran bir vektör tutar.
+
+public struct HabitList has drop {
+    habits: vector<Habit>
+}
+public fun empty_list(): HabitList {
+    let empty_vec = vector::empty<Habit>();
+    
+    HabitList { habits: empty_vec }
+}
+public fun add_habit(list: &mut HabitList, habit: Habit) {
+    vector::push_back(&mut list.habits, habit);
+}
     // }
 }
-
