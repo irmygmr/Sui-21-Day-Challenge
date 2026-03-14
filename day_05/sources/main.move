@@ -44,6 +44,25 @@ module challenge::day_05 {
     // public fun complete_habit(list: &mut HabitList, index: u64) {
     //     // Your code here
     //     // Hint: if (index < length) { ... }
-    // }
-}
 
+// Varsayalım ki Habit yapın şu şekilde:
+// struct Habit has store { completed: bool, name: String }
+// struct HabitList has key { habits: vector<Habit> }
+
+public fun complete_habit(list: &mut HabitList, index: u64) {
+    // 1. Adım: Listenin uzunluğunu alalım
+    let len = vector::length(&list.habits);
+
+    // 2. Adım: Index'in geçerli olup olmadığını kontrol edelim (if/else)
+    if (index < len) {
+        // 3. Adım: Geçerli ise ilgili elemanı mutasyon (değişim) için ödünç alalım
+        let habit_ref = vector::borrow_mut(&mut list.habits, index);
+        
+        // 4. Adım: Alanı güncelleyelim
+        habit_ref.completed = true;
+    } else {
+        // İsteğe bağlı: Geçersiz index durumunda yapılacaklar (hata verme vb.)
+        // abort 0; 
+    }
+}
+}
