@@ -58,6 +58,20 @@ module challenge::day_06 {
     // TODO: Update new_habit to accept String
     // public fun new_habit(name: String): Habit {
     //     // Your code here
+    module challenge::habit_tracker {
+    use std::string::{Self, String};
+
+    public struct Habit has copy, drop {
+        name: String,     
+        completed: bool,
+    }
+
+    public fun new_habit(name: String): Habit {
+        Habit {
+            name: name,
+            completed: false, 
+        }
+    }
     // }
 
     // TODO: Write a helper function 'make_habit' that:
@@ -66,7 +80,12 @@ module challenge::day_06 {
     // - Creates and returns a Habit
     // public fun make_habit(name_bytes: vector<u8>): Habit {
     //     // Your code here
+    public fun make_habit(name_bytes: vector<u8>): Habit {
+        let name_string = string::utf8(name_bytes);
+        
+        new_habit(name_string)
+    }
+}
     //     // Hint: let name = string::utf8(name_bytes);
     // }
-}
 
