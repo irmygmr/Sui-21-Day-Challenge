@@ -74,7 +74,6 @@ module challenge::day_07 {
     fun test_add_habits() {
         let mut list = empty_list();
         
-        // Tek satırda oluştur ve ekle
         list.add_habit(new_habit(b"Exercise".to_string()));
         list.add_habit(new_habit(b"Coding".to_string()));
 
@@ -88,7 +87,6 @@ module challenge::day_07 {
 
         list.complete_habit(0);
 
-        // 0. elemanı ödünç al ve tamamlandı mı bak
         assert!(list.habits.borrow(0).completed == true, 1);
     }
     // }
