@@ -70,6 +70,27 @@ module challenge::day_07 {
     // #[test]
     // fun test_complete_habit() {
     //     // Your code here
+    #[test]
+    fun test_add_habits() {
+        let mut list = empty_list();
+        
+        // Tek satırda oluştur ve ekle
+        list.add_habit(new_habit(b"Exercise".to_string()));
+        list.add_habit(new_habit(b"Coding".to_string()));
+
+        assert!(list.habits.length() == 2, 0);
+    }
+
+    #[test]
+    fun test_complete_habit() {
+        let mut list = empty_list();
+        list.add_habit(new_habit(b"Move".to_string()));
+
+        list.complete_habit(0);
+
+        // 0. elemanı ödünç al ve tamamlandı mı bak
+        assert!(list.habits.borrow(0).completed == true, 1);
+    }
     // }
 }
 
