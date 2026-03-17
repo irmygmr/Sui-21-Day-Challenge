@@ -5,8 +5,8 @@
 /// 2. Create a Task struct
 /// 3. Write a constructor function
 
-module challenge::day_08 {
-    use std::string::String;
+//module challenge::day_08 {
+    //use std::string::String;
 
     // TODO: Define a struct called 'Task' with:
     // - title: String
@@ -21,6 +21,23 @@ module challenge::day_08 {
     // that takes title and reward, returns a Task with done = false
     // public fun new_task(title: String, reward: u64): Task {
     //     // Your code here
-    // }
+    module challenge::day_08 {
+    use std::string::String;
+
+    public struct Task has copy, drop {
+        title: String,
+        reward: u64,
+        done: bool,
+    }
+
+    public fun new_task(title: String, reward: u64): Task {
+        Task {
+            title,  
+            reward,
+            done: false,
+        }
+    }
 }
+    // }
+
 
