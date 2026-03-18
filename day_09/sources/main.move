@@ -29,12 +29,37 @@ module challenge::day_09 {
     // TODO: Update new_task to set status = TaskStatus::Open
     // public fun new_task(title: String, reward: u64): Task {
     //     // Your code here
+
+    public enum TaskStatus has copy, drop, store {
+        Open,
+        Completed,
+    }
+    public struct Task has copy, drop, store {
+        title: String,
+        reward: u64,
+        status: TaskStatus,  // Changed from done: bool
+    }
+
+    public fun new_task(title: String, reward: u64): Task {
+        Task {
+            title,
+            reward,
+            status: TaskStatus::Open,
+        }
+    }
     // }
 
     // TODO: Write a function 'is_open' that checks if task.status == TaskStatus::Open
     // public fun is_open(task: &Task): bool {
     //     // Your code here
+    public fun is_open(task: &Task): bool {
+        // Move dilinde enum kontrolü için 'match' veya direkt erişim kullanılır
+        match (task.status) {
+            TaskStatus::Open => true,
+            TaskStatus::Completed => false,
+        }
+    }
+}
     //     // Hint: task.status == TaskStatus::Open
     // }
-}
 
