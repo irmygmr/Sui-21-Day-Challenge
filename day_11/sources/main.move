@@ -43,12 +43,23 @@ module challenge::day_11 {
     // Add 'drop' ability
     // public struct TaskBoard has drop {
     //     // Your fields here
+    // TaskBoard yapısını tanımlıyoruz
+public struct TaskBoard has drop {
+    owner: address, 
+    tasks: vector<Task>, 
+}
     // }
 
     // TODO: Write a constructor 'new_board' that takes owner: address
     // and returns an empty TaskBoard
     // public fun new_board(owner: address): TaskBoard {
     //     // Your code here
+    public fun new_board(owner: address): TaskBoard {
+    TaskBoard {
+        owner,                    
+        tasks: vector::empty<Task>(), 
+    }
+}
     // }
 
     // TODO: Write a function 'add_task' that:
@@ -57,6 +68,9 @@ module challenge::day_11 {
     // The task becomes part of the board's data
     // public fun add_task(board: &mut TaskBoard, task: Task) {
     //     // Your code here
+    public fun add_task(board: &mut TaskBoard, task: Task) {
+    vector::push_back(&mut board.tasks, task);
+}
     // }
 }
 
