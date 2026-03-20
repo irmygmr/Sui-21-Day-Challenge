@@ -40,6 +40,19 @@ module challenge::day_10 {
     // This should be public so users can call it
     // public fun complete_task(task: &mut Task) {
     //     // Your code here
+
+public fun complete_task(task: &mut Task) {
+    task.status = TaskStatus::Completed;
+}
+fun is_reward_valid(reward: u64): bool {
+    reward > 0
+}
+
+public fun check_and_complete(task: &mut Task) {
+    if (is_reward_valid(task.reward)) {
+        complete_task(task);
+    }
+}
     // }
 
     // TODO: (Optional) Write a private helper function
