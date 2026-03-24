@@ -67,6 +67,19 @@ module challenge::day_13 {
     // - Loops through all tasks and sums their rewards
     // public fun total_reward(board: &TaskBoard): u64 {
     //     // Your code here
+    public fun total_reward(board: &TaskBoard): u64 {
+        let mut total = 0;
+        let mut i = 0;
+        let len = vector::length(&board.tasks);
+
+        while (i < len) {
+            let task = vector::borrow(&board.tasks, i);
+            total = total + task.reward;
+            i = i + 1;
+        };
+
+        total
+    }
     //     // Initialize total = 0
     //     // Loop through tasks, add each reward to total
     // }
@@ -77,6 +90,23 @@ module challenge::day_13 {
     // - Loops through tasks and counts those with status == Completed
     // public fun completed_count(board: &TaskBoard): u64 {
     //     // Your code here
-    // }
+    public fun completed_count(board: &TaskBoard): u64 {
+        let mut count = 0;
+        let mut i = 0;
+        let len = vector::length(&board.tasks);
+
+        while (i < len) {
+            let task = vector::borrow(&board.tasks, i);
+            // Durum kontrolü: Sadece Completed olanları say
+            if (task.status == TaskStatus::Completed) {
+                count = count + 1;
+            };
+            i = i + 1;
+        };
+
+        count
+    }
 }
+    // }
+
 
