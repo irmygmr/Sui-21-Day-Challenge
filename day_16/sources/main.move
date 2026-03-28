@@ -1,17 +1,9 @@
-/// DAY 16: Introduce Object with UID & key
-/// 
-/// Today you will:
-/// 1. Learn about UID (Unique Identifier)
-/// 2. Learn about the 'key' ability
-/// 3. Create your first Sui object
-///
-/// Note: The code includes plotId support. You can copy code from 
-/// day_15/sources/solution.move if needed (note: plotId functionality has been added)
-
 module challenge::day_16 {
+    
+    use sui::object::{Self, UID};
+    use sui::tx_context::{TxContext};
+    use std::vector;
 
-
-    // Copy from day_15: FarmCounters struct
     const MAX_PLOTS: u64 = 20;
     const E_PLOT_NOT_FOUND: u64 = 1;
     const E_PLOT_LIMIT_EXCEEDED: u64 = 2;
@@ -24,6 +16,11 @@ module challenge::day_16 {
         plots: vector<u8>,
     }
 
+    public struct Farm has key {
+        id: UID,
+        counters: FarmCounters,
+    }
+
     fun new_counters(): FarmCounters {
         FarmCounters {
             planted: 0,
@@ -32,15 +29,20 @@ module challenge::day_16 {
         }
     }
 
-    fun plant(counters: &mut FarmCounters, plotId: u8) {
-        // Check if plotId is valid (between 1 and 20)
-        assert!(plotId >= 1 && plotId <= (MAX_PLOTS as u8), E_INVALID_PLOT_ID);
+    public fun new_farm(ctx: &mut TxContext): Farm {
+        Farm {
+            id: object::new(ctx),
+            counters: new_counters(),
+        }
+    }
+    public fun plant(farm: &mut Farm, plotId: u8) {
+        let counters = &mut farm.counters;
         
-        // Check if we've reached the plot limit
+       
+        assert!(plotId >= 1 && plotId <= (MAX_PLOTS as u8), E_INVALID_PLOT_ID);
         let len = vector::length(&counters.plots);
         assert!(len < MAX_PLOTS, E_PLOT_LIMIT_EXCEEDED);
         
-        // Check if plot already exists in the vector
         let mut i = 0;
         while (i < len) {
             let existing_plot = vector::borrow(&counters.plots, i);
@@ -52,10 +54,10 @@ module challenge::day_16 {
         vector::push_back(&mut counters.plots, plotId);
     }
 
-    fun harvest(counters: &mut FarmCounters, plotId: u8) {
+    public fun harvest(farm: &mut Farm, plotId: u8) {
+        let counters = &mut farm.counters;
         let len = vector::length(&counters.plots);
-                
-        // Check if plot exists in the vector and find its index
+        
         let mut i = 0;
         let mut found_index = len; 
         while (i < len) {
@@ -66,30 +68,9 @@ module challenge::day_16 {
             i = i + 1;
         };
         
-        // Assert that plot was found (found_index < len means we found it)
         assert!(found_index < len, E_PLOT_NOT_FOUND);
         
-        // Remove the plot from the vector
         vector::remove(&mut counters.plots, found_index);
         counters.harvested = counters.harvested + 1;
     }
-
-    // TODO: Define a struct called 'Farm' with:
-    // - id: UID (this makes it a Sui object)
-    // - counters: FarmCounters
-    // Add 'key' ability (required for Sui objects)
-    // public struct Farm has key {
-    //     id: UID,
-    //     counters: FarmCounters,
-    // }
-
-    // TODO: Write a constructor 'new_farm' that:
-    // - Takes ctx: &mut TxContext
-    // - Creates a UID using object::new(ctx)
-    // - Returns a Farm with the UID and default counters
-    // fun new_farm(ctx: &mut TxContext): Farm {
-    //     // Your code here
-    //     // Hint: let id = object::new(ctx);
-    // }
 }
-
