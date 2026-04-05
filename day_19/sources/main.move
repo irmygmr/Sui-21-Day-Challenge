@@ -112,6 +112,9 @@ module challenge::day_19 {
     // - Returns u64 (the planted count)
     // public fun total_planted(farm: &Farm): u64 {
     //     // Your code here
+    public fun total_planted(farm: &Farm): u64 {
+        farm.counters.planted
+    }
     // }
 
     // TODO: Write a function 'total_harvested' that:
@@ -119,6 +122,9 @@ module challenge::day_19 {
     // - Returns u64 (the harvested count)
     // public fun total_harvested(farm: &Farm): u64 {
     //     // Your code here
+    public fun total_harvested(farm: &Farm): u64 {
+        farm.counters.harvested
+    }
     // }
 
     // TODO: (Optional) Write a test that:
