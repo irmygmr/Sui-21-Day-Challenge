@@ -106,6 +106,9 @@ module challenge::day_18 {
     // - Calls plant_on_farm(farm, plotId)
     // entry fun plant_on_farm_entry(farm: &mut Farm, plotId: u8) {
     //     // Your code here
+    entry fun plant_on_farm_entry(farm: &mut Farm, plotId: u8) {
+        plant_on_farm(farm, plotId);
+    }
     // }
 
     // TODO: Write an entry function 'harvest_from_farm_entry' that:
@@ -113,6 +116,9 @@ module challenge::day_18 {
     // - Calls harvest_from_farm(farm, plotId)
     // entry fun harvest_from_farm_entry(farm: &mut Farm, plotId: u8) {
     //     // Your code here
-    // }
+    entry fun harvest_from_farm_entry(farm: &mut Farm, plotId: u8) {
+        harvest_from_farm(farm, plotId);
+    }
 }
+    // }
 
