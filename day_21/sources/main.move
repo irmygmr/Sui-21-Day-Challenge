@@ -9,24 +9,36 @@
 
 module challenge::day_21 {
     use sui::event;
+    use sui::tx_context::{Self, TxContext};
+    use sui::object::{Self, UID};
+    use sui::transfer;
+    use std::vector;
 
-    // Note: test_scenario is available in Sui framework for testing
-    // You'll need to import it when writing tests: use sui::test_scenario;
-
-    // Copy from day_20: All structs and functions
-    
+    // Hata Kodları
     const MAX_PLOTS: u64 = 20;
     const E_PLOT_NOT_FOUND: u64 = 1;
     const E_PLOT_LIMIT_EXCEEDED: u64 = 2;
     const E_INVALID_PLOT_ID: u64 = 3;
     const E_PLOT_ALREADY_EXISTS: u64 = 4;
-    
+
+    // --- Structlar ---
 
     public struct FarmCounters has copy, drop, store {
         planted: u64,
         harvested: u64,
         plots: vector<u8>,
     }
+
+    public struct Farm has key {
+        id: UID,
+        counters: FarmCounters,
+    }
+
+    public struct PlantEvent has copy, drop {
+        planted_after: u64,
+    }
+
+    // --- Fonksiyonlar ---
 
     fun new_counters(): FarmCounters {
         FarmCounters {
@@ -36,97 +48,215 @@ module challenge::day_21 {
         }
     }
 
-    fun plant(counters: &mut FarmCounters, plotId: u8) {
-        // Check if plotId is valid (between 1 and 20)
+    public entry fun create_farm(ctx: &mut TxContext) {
+        let farm = Farm {
+            id: object::new(ctx),
+            counters: new_counters(),
+        };
+        transfer::share_object(farm);
+    }
+
+    public entry fun plant_on_farm_entry(farm: &mut Farm, plotId: u8) {
+        // Doğrulamalar
         assert!(plotId >= 1 && plotId <= (MAX_PLOTS as u8), E_INVALID_PLOT_ID);
-        
-        // Check if we've reached the plot limit
-        let len = vector::length(&counters.plots);
+        let len = vector::length(&farm.counters.plots);
         assert!(len < MAX_PLOTS, E_PLOT_LIMIT_EXCEEDED);
         
-        // Check if plot already exists in the vector
         let mut i = 0;
         while (i < len) {
-            let existing_plot = vector::borrow(&counters.plots, i);
+            let existing_plot = vector::borrow(&farm.counters.plots, i);
             assert!(*existing_plot != plotId, E_PLOT_ALREADY_EXISTS);
             i = i + 1;
         };
         
-        counters.planted = counters.planted + 1;
-        vector::push_back(&mut counters.plots, plotId);
+        // İşlem
+        farm.counters.planted = farm.counters.planted + 1;
+        vector::push_back(&mut farm.counters.plots, plotId);
+
+        // Event
+        event::emit(PlantEvent {
+            planted_after: farm.counters.planted,
+        });
     }
 
-    fun harvest(counters: &mut FarmCounters, plotId: u8) {
-        let len = vector::length(&counters.plots);
-                
-        // Check if plot exists in the vector and find its index
+    public entry fun harvest_from_farm_entry(farm: &mut Farm, plotId: u8) {
+        let len = vector::length(&farm.counters.plots);
         let mut i = 0;
         let mut found_index = len; 
+
         while (i < len) {
-            let existing_plot = vector::borrow(&counters.plots, i);
+            let existing_plot = vector::borrow(&farm.counters.plots, i);
             if (*existing_plot == plotId) {
                 found_index = i;
             };
             i = i + 1;
         };
         
-        // Assert that plot was found (found_index < len means we found it)
         assert!(found_index < len, E_PLOT_NOT_FOUND);
         
-        // Remove the plot from the vector
-        vector::remove(&mut counters.plots, found_index);
-        counters.harvested = counters.harvested + 1;
+        vector::remove(&mut farm.counters.plots, found_index);
+        farm.counters.harvested = farm.counters.harvested + 1;
     }
 
-    public struct Farm has key {
-        id: UID,
-        counters: FarmCounters,
-    }
+    // --- Sorgu Fonksiyonları ---
 
-    fun new_farm(ctx: &mut TxContext): Farm {
-        Farm {
-            id: object::new(ctx),
-            counters: new_counters(),
-        }
-    }
-
-    entry fun create_farm(ctx: &mut TxContext) {
-        let farm = new_farm(ctx);
-        transfer::share_object(farm);
-    }
-
-    fun plant_on_farm(farm: &mut Farm, plotId: u8) {
-        plant(&mut farm.counters, plotId);
-    }
-
-    fun harvest_from_farm(farm: &mut Farm, plotId: u8) {
-        harvest(&mut farm.counters, plotId);
-    }
-
-    fun total_planted(farm: &Farm): u64 {
+    public fun total_planted(farm: &Farm): u64 {
         farm.counters.planted
     }
 
-    // Used in tests (see solution.move)
-    fun total_harvested(farm: &Farm): u64 {
+    public fun total_harvested(farm: &Farm): u64 {
         farm.counters.harvested
     }
 
-    public struct PlantEvent has copy, drop {
-        planted_after: u64,
+    // ==========================================
+    //                  TESTLER
+    // ==========================================
+    #[test_only]
+    use sui::test_scenario;
+
+    #[test]
+    fun test_create_farm() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        
+        create_farm(test_scenario::ctx(&mut scenario));
+
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let farm = test_scenario::take_shared<Farm>(&scenario);
+            assert!(total_planted(&farm) == 0, 0);
+            assert!(total_harvested(&farm) == 0, 0);
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
     }
 
-    entry fun plant_on_farm_entry(farm: &mut Farm, plotId: u8) {
-        plant_on_farm(farm, plotId);
-        let planted_count = total_planted(farm);
-        event::emit(PlantEvent {
-            planted_after: planted_count,
-        });
+    #[test]
+    fun test_planting_increases_counter() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            plant_on_farm_entry(&mut farm, 1);
+            assert!(total_planted(&farm) == 1, 0);
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
     }
 
-    entry fun harvest_from_farm_entry(farm: &mut Farm, plotId: u8) {
-        harvest_from_farm(farm, plotId);
+    #[test]
+    fun test_harvesting_increases_counter() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            plant_on_farm_entry(&mut farm, 1);
+            harvest_from_farm_entry(&mut farm, 1);
+            assert!(total_planted(&farm) == 1, 0);
+            assert!(total_harvested(&farm) == 1, 0);
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
     }
+
+    #[test]
+    fun test_multiple_operations() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            plant_on_farm_entry(&mut farm, 3);
+            plant_on_farm_entry(&mut farm, 5);
+            plant_on_farm_entry(&mut farm, 18);
+            harvest_from_farm_entry(&mut farm, 5);
+            
+            assert!(total_planted(&farm) == 3, 0);
+            assert!(total_harvested(&farm) == 1, 0);
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = E_INVALID_PLOT_ID)]
+    fun test_invalid_plot_id_zero() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            plant_on_farm_entry(&mut farm, 0); // Hata vermeli
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = E_PLOT_ALREADY_EXISTS)]
+    fun test_duplicate_plot() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            plant_on_farm_entry(&mut farm, 1);
+            plant_on_farm_entry(&mut farm, 1); // Hata vermeli
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = E_PLOT_LIMIT_EXCEEDED)]
+    fun test_plot_limit() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            let mut i = 1;
+            // 20 adet farklı plot ekliyoruz (1'den 20'ye kadar)
+            while (i <= 20) {
+                plant_on_farm_entry(&mut farm, (i as u8));
+                i = i + 1;
+            };
+            
+            // ŞİMDİ: 21. plotu eklemeye çalışıyoruz. 
+            // ID hatası almamak için geçerli bir ID (1-20 arası) veriyoruz, 
+            // ama limit dolduğu için E_PLOT_LIMIT_EXCEEDED (2) hatası bekliyoruz.
+            plant_on_farm_entry(&mut farm, 1); 
+            
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
+    }
+    #[test]
+    #[expected_failure(abort_code = E_PLOT_NOT_FOUND)]
+    fun test_harvest_nonexistent_plot() {
+        let addr = @0xA1;
+        let mut scenario = test_scenario::begin(addr);
+        create_farm(test_scenario::ctx(&mut scenario));
+        test_scenario::next_tx(&mut scenario, addr);
+        {
+            let mut farm = test_scenario::take_shared<Farm>(&scenario);
+            harvest_from_farm_entry(&mut farm, 10); // Hiç ekilmemiş plot hata vermeli
+            test_scenario::return_shared(farm);
+        };
+        test_scenario::end(scenario);
+    }
+}
 
     // TODO: Write comprehensive tests:
     // 
@@ -168,5 +298,4 @@ module challenge::day_21 {
     // Make sure function names are consistent
     // Remove any unnecessary comments
     // Ensure all tests pass
-}
 
